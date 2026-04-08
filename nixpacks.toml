@@ -1,0 +1,10 @@
+[phases.setup]
+nixPkgs = ["jdk17"]
+
+[phases.build]
+cmds = [
+  "cd ecommerce_backend && chmod +x mvnw && ./mvnw clean package -DskipTests --no-transfer-progress"
+]
+
+[start]
+cmd = "java -Dserver.port=$PORT -jar ecommerce_backend/target/ecommerce-0.0.1-SNAPSHOT.jar"
