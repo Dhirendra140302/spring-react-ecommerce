@@ -61,6 +61,12 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- PostgreSQL (for Render free tier) -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- Razorpay -->
 		<dependency>
 			<groupId>com.razorpay</groupId>
