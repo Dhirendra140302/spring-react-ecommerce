@@ -1,10 +1,9 @@
 services:
   - type: web
     name: smartcart-backend
-    runtime: java
-    rootDir: ecommerce_backend
-    buildCommand: "./mvnw clean package -DskipTests --no-transfer-progress"
-    startCommand: "java -Dserver.port=$PORT -jar target/ecommerce-0.0.1-SNAPSHOT.jar"
+    runtime: docker
+    dockerfilePath: ecommerce_backend/Dockerfile
+    dockerContext: ecommerce_backend
     healthCheckPath: /api/products
     envVars:
       - key: DATABASE_URL
@@ -21,8 +20,6 @@ services:
         value: YOUR_RAZORPAY_KEY_ID
       - key: RAZORPAY_KEY_SECRET
         value: YOUR_RAZORPAY_KEY_SECRET
-      - key: JAVA_OPTS
-        value: "-Xmx400m -Xms200m"
 
 databases:
   - name: smartcart-db
