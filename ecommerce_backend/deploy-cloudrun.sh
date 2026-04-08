@@ -1,34 +1,29 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════
-#  SmartCart — Google Cloud Run Deployment Script
+#  SmartCart — Google Cloud Run Full Auto Deploy
+#  Project: ecommerce-492713
 #  Run: bash deploy-cloudrun.sh
 # ═══════════════════════════════════════════════════════════
 set -e
 
-# ── CONFIG — change these ──────────────────────────────────
-PROJECT_ID=""          # your GCP project ID
+PROJECT_ID="ecommerce-492713"
 REGION="us-central1"
 SERVICE_NAME="smartcart-backend"
 IMAGE="gcr.io/$PROJECT_ID/$SERVICE_NAME"
-DB_INSTANCE=""         # Cloud SQL instance name (leave empty to use external DB)
-DB_URL=""              # Full JDBC URL e.g. jdbc:mysql://...
+DB_INSTANCE="smartcart-mysql"
+DB_NAME="smartcart"
 DB_USER="root"
-DB_PASS=""
+DB_PASS="SmartCart@2024"
 JWT_SECRET="SmartCartSecretKey2024SmartCartSecretKey2024SmartCartSecretKey2024"
 ALLOWED_ORIGINS="https://ecommerce-iota-red-20.vercel.app"
 RAZORPAY_KEY_ID="YOUR_RAZORPAY_KEY_ID"
 RAZORPAY_KEY_SECRET="YOUR_RAZORPAY_KEY_SECRET"
-# ──────────────────────────────────────────────────────────
 
-if [ -z "$PROJECT_ID" ]; then
-  echo "❌ Set PROJECT_ID in this script first"
-  exit 1
-fi
-
-echo "🔧 Setting project to $PROJECT_ID..."
+echo "📋 Project: $PROJECT_ID"
 gcloud config set project $PROJECT_ID
 
-echo "🔌 Enabling required APIs..."
+echo ""
+echo "🔌 Enabling APIs..."
 gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
@@ -36,12 +31,49 @@ gcloud services enable \
   sqladmin.googleapis.com \
   --quiet
 
-echo "🐳 Building Docker image..."
+echo ""
+echo "🗄️  Creating Cloud SQL MySQL instance..."
+# Check if instance already exists
+if gcloud sql instances describe $DB_INSTANCE --quiet 2>/dev/null; then
+  echo "   Instance already exists, skipping..."
+else
+  gcloud sql instances create $DB_INSTANCE \
+    --database-version=MYSQL_8_0 \
+    --tier=db-f1-micro \
+    --region=$REGION \
+    --storage-type=SSD \
+    --storage-size=10GB \
+    --no-backup \
+    --quiet
+  echo "   ✅ Instance created"
+fi
+
+echo ""
+echo "📦 Creating database..."
+gcloud sql databases create $DB_NAME \
+  --instance=$DB_INSTANCE \
+  --quiet 2>/dev/null || echo "   Database already exists"
+
+echo ""
+echo "👤 Setting root password..."
+gcloud sql users set-password $DB_USER \
+  --instance=$DB_INSTANCE \
+  --password=$DB_PASS \
+  --quiet
+
+# Get Cloud SQL public IP
+DB_IP=$(gcloud sql instances describe $DB_INSTANCE \
+  --format='value(ipAddresses[0].ipAddress)')
+DB_URL="jdbc:mysql://$DB_IP:3306/$DB_NAME?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+
+echo ""
+echo "🐳 Building & pushing Docker image via Cloud Build..."
 gcloud builds submit \
   --tag $IMAGE:latest \
   --project $PROJECT_ID \
   .
 
+echo ""
 echo "🚀 Deploying to Cloud Run..."
 gcloud run deploy $SERVICE_NAME \
   --image $IMAGE:latest \
@@ -65,16 +97,23 @@ RAZORPAY_KEY_SECRET=$RAZORPAY_KEY_SECRET" \
   --quiet
 
 echo ""
-echo "✅ Deployed! Getting service URL..."
+echo "🌐 Getting service URL..."
 URL=$(gcloud run services describe $SERVICE_NAME \
   --region $REGION \
   --format 'value(status.url)')
 
 echo ""
-echo "═══════════════════════════════════════════════"
-echo "  🌐 Backend URL: $URL"
+echo "═══════════════════════════════════════════════════════"
+echo "  ✅ DEPLOYMENT COMPLETE!"
+echo ""
+echo "  🌐 Backend URL : $URL"
+echo "  🗄️  Database IP : $DB_IP"
+echo ""
 echo "  📋 Next steps:"
-echo "  1. Test: curl $URL/api/products"
-echo "  2. Set VITE_API_URL=$URL in Vercel"
-echo "  3. Change DDL_AUTO=update after first deploy"
-echo "═══════════════════════════════════════════════"
+echo "  1. Test API  : curl $URL/api/products"
+echo "  2. Vercel env: VITE_API_URL=$URL"
+echo "  3. After test: change DDL_AUTO to 'update'"
+echo "     gcloud run services update $SERVICE_NAME \\"
+echo "       --region $REGION \\"
+echo "       --update-env-vars DDL_AUTO=update"
+echo "═══════════════════════════════════════════════════════"
