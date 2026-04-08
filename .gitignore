@@ -1,0 +1,22 @@
+# Backend
+ecommerce_backend/target/
+ecommerce_backend/.mvn/wrapper/maven-wrapper.jar
+ecommerce_backend/.classpath
+ecommerce_backend/.project
+ecommerce_backend/.settings/
+ecommerce_backend/uploads/
+
+# Frontend
+ecommerce_frontend/ecommerce/node_modules/
+ecommerce_frontend/ecommerce/dist/
+ecommerce_frontend/ecommerce/.env
+ecommerce_frontend/ecommerce/*.local
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
