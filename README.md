@@ -3,8 +3,11 @@
 A production-ready e-commerce application built with **Spring Boot** + **React**, featuring JWT authentication, Razorpay payments, and a real product catalog from FakeStore API.
 
 ![Java](https://img.shields.io/badge/Java-17-orange?logo=java)
+
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green?logo=springboot)
+
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
+
 ![MySQL](https://img.shields.io/badge/MySQL-8-blue?logo=mysql)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Payment-blue)
 
